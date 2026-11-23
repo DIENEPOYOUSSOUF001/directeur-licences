@@ -1,0 +1,27 @@
+GMI - GESTION DES LICENCES DE DIRECTEUR.xlsm
+=============================================
+
+1) DONNER UNE CLÉ À UN CLIENT
+   - Le client lance DIRECTEUR.xlsm : l'écran d'activation affiche son IDENTIFIANT MACHINE (XXXX-XXXX-XXXX).
+   - Il vous l'envoie (WhatsApp +223 92 41 06 80 ou gmidy0.netlify.app).
+   - Vous générez sa clé :
+        python3 gmi_keygen.py XXXX-XXXX-XXXX 2027-12-31      (annuelle)
+        python3 gmi_keygen.py XXXX-XXXX-XXXX permanente      (permanente)
+   - Vous lui envoyez la clé GMI-.... Elle ne fonctionne que sur CE poste.
+   - Chaque clé émise est notée dans licences_emises.csv.
+   !! gmi_keygen.py contient votre secret : ne le partagez jamais.
+
+2) SUIVI À DISTANCE (machines, temps restant, statut)
+   Dans le dépôt GitHub de gmidy0.netlify.app, ajoutez :
+     - netlify/functions/licence.mjs
+     - netlify/functions/package.json
+     - licences.html   (à la racine du site)
+   Dans Netlify > Site configuration > Environment variables, créez :  ADMIN_KEY = (un mot de passe long)
+   Redéployez, puis ouvrez  https://gmidy0.netlify.app/licences.html  et saisissez ADMIN_KEY.
+   Le tableau montre : machine, nom du poste, statut (essai / active / expirée / suspendue),
+   temps restant, date d'expiration, dernière connexion, et un bouton Suspendre / Rétablir.
+
+3) CE QUI EST ENVOYÉ PAR LE LOGICIEL (annoncé au client dans le contrat)
+   identifiant machine, nom du poste, statut, temps restant, n° de licence, version.
+   Un seul rapport par jour, à n'importe quelle heure, dès qu'internet est disponible.
+   Aucune donnée d'élèves, de notes ou de fichiers.
