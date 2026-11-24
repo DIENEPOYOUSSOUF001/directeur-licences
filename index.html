@@ -22,7 +22,7 @@ th,td{padding:9px 10px;text-align:left;border-bottom:1px solid #1d3a66;white-spa
 <th>En ligne</th><th>Machine</th><th>Poste</th><th>Statut</th><th>Temps restant</th><th>Expire le</th><th>Licence</th><th>Version</th><th>Rapports</th><th>Dernière vue</th><th>Première vue</th><th>Action</th>
 </tr></thead><tbody id="rows"></tbody></table><div id="empty" class="empty" hidden>Aucune machine pour le moment : elles apparaissent dès que DIRECTEUR envoie son premier rapport.</div></div></main>
 <script>
-let KEY=sessionStorage.getItem('gmi_admin')||prompt('Clé administrateur :')||'';sessionStorage.setItem('gmi_admin',KEY);
+let KEY='';
 let DATA=[];const $=id=>document.getElementById(id);
 const URL_API='/.netlify/functions/licence';
 const fmtReste=r=>{if(r.statut==='ESSAI'){const s=r.reste|0;return Math.floor(s/3600)+' h '+String(Math.floor(s%3600/60)).padStart(2,'0')+' min'}return '—'};
@@ -60,7 +60,7 @@ function render(){
 async function load(){$('msg').textContent='Chargement…';
  try{
   const r=await fetch(URL_API,{headers:{'x-admin-key':KEY}});
-  if(r.status===401){$('msg').textContent='Clé administrateur incorrecte (rechargez la page)';sessionStorage.removeItem('gmi_admin');return}
+  
   if(!r.ok){$('msg').textContent='Erreur serveur ('+r.status+') : voir Netlify > Functions > licence > logs';return}
   DATA=await r.json();$('msg').textContent='Mis à jour '+new Date().toLocaleTimeString('fr-FR');$('live').className='dot on';render();
  }catch(e){$('live').className='dot';$('msg').textContent='Connexion impossible'}}
