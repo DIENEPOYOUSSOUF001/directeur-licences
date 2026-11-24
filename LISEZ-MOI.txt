@@ -1,27 +1,32 @@
-GMI - GESTION DES LICENCES DE DIRECTEUR.xlsm
-=============================================
+DIRECTEUR - SITE DE SUIVI DES LICENCES (site Netlify independant, via GitHub)
+=============================================================================
+Contenu du depot (a mettre tel quel a la RACINE du depot GitHub) :
+  index.html                      tableau de bord en direct
+  netlify.toml                    reglages Netlify
+  netlify/functions/licence.mjs   recoit les rapports du logiciel + commandes admin
+  netlify/functions/package.json  dependance @netlify/blobs
 
-1) DONNER UNE CLÉ À UN CLIENT
-   - Le client lance DIRECTEUR.xlsm : l'écran d'activation affiche son IDENTIFIANT MACHINE (XXXX-XXXX-XXXX).
-   - Il vous l'envoie (WhatsApp +223 92 41 06 80 ou gmidy0.netlify.app).
-   - Vous générez sa clé :
-        python3 gmi_keygen.py XXXX-XXXX-XXXX 2027-12-31      (annuelle)
-        python3 gmi_keygen.py XXXX-XXXX-XXXX permanente      (permanente)
-   - Vous lui envoyez la clé GMI-.... Elle ne fonctionne que sur CE poste.
-   - Chaque clé émise est notée dans licences_emises.csv.
-   !! gmi_keygen.py contient votre secret : ne le partagez jamais.
+1) GITHUB (nouveau compte)
+   - github.com > Sign up > creez le compte et confirmez l'e-mail.
+   - New repository > nom : directeur-licences > Private > Create.
+   - "uploading an existing file" > glissez index.html, netlify.toml et le dossier netlify
+     (si le dossier ne passe pas : Add file > Create new file, tapez
+      netlify/functions/licence.mjs puis collez le contenu ; idem package.json) > Commit changes.
 
-2) SUIVI À DISTANCE (machines, temps restant, statut)
-   Dans le dépôt GitHub de gmidy0.netlify.app, ajoutez :
-     - netlify/functions/licence.mjs
-     - netlify/functions/package.json
-     - licences.html   (à la racine du site)
-   Dans Netlify > Site configuration > Environment variables, créez :  ADMIN_KEY = (un mot de passe long)
-   Redéployez, puis ouvrez  https://gmidy0.netlify.app/licences.html  et saisissez ADMIN_KEY.
-   Le tableau montre : machine, nom du poste, statut (essai / active / expirée / suspendue),
-   temps restant, date d'expiration, dernière connexion, et un bouton Suspendre / Rétablir.
+2) NETLIFY (nouveau compte)
+   - app.netlify.com > Sign up > "Sign up with GitHub" (utilisez le nouveau compte GitHub).
+   - Add new site > Import an existing project > GitHub > directeur-licences > Deploy.
+   - Site configuration > Change site name (ex : directeur-gmi).
+   - Site configuration > Environment variables > ADMIN_KEY = mot de passe long (20+ car.)
+   - Deploys > Trigger deploy > Deploy site.
 
-3) CE QUI EST ENVOYÉ PAR LE LOGICIEL (annoncé au client dans le contrat)
-   identifiant machine, nom du poste, statut, temps restant, n° de licence, version.
-   Un seul rapport par jour, à n'importe quelle heure, dès qu'internet est disponible.
-   Aucune donnée d'élèves, de notes ou de fichiers.
+3) OUVRIR  https://VOTRE-SITE.netlify.app  et saisir ADMIN_KEY.
+
+4) DANS DIRECTEUR.xlsm  (Alt+F11 > Edition > Remplacer > Projet actif)
+   remplacer  https://gmidy0.netlify.app/.netlify/functions/licence
+   par        https://VOTRE-SITE.netlify.app/.netlify/functions/licence
+   (ne pas toucher au simple texte gmidy0.netlify.app)
+
+TEMPS REEL : le tableau se rafraichit tout seul (5/10/30/60 s au choix).
+Une machine apparait "en ligne" si elle a envoye un rapport il y a moins de 5 minutes ;
+cela suppose que le logiciel envoie un signal regulier (voir les explications de Claude).

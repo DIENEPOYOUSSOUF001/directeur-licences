@@ -1,0 +1,74 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>DIRECTEUR — Suivi des licences</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1f3a;--card:#102a4c;--txt:#e6eefc;--mut:#9db3d3;--ok:#1e8e4e;--warn:#d69e1a;--ko:#b23a3a;--acc:#00c8ff}
+body{margin:0;font:14px/1.4 system-ui,Segoe UI,Arial;background:var(--bg);color:var(--txt)}
+header{padding:18px 24px;border-bottom:2px solid var(--acc);display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+h1{margin:0;font-size:20px}main{padding:20px 24px}
+.stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}.stat{background:var(--card);padding:10px 16px;border-radius:8px}
+.stat b{display:block;font-size:22px}
+input,button{font:inherit;padding:7px 10px;border-radius:6px;border:1px solid #2c4a78;background:#0e2444;color:var(--txt)}
+button{cursor:pointer;background:#17407a}button:hover{background:#1d5199}button.del{background:#6b2a2a}button.del:hover{background:#8a3535}
+table{width:100%;border-collapse:collapse;background:var(--card);border-radius:8px;overflow:hidden}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid #1d3a66;white-space:nowrap}th{color:var(--mut);font-weight:600}
+.badge{padding:2px 9px;border-radius:99px;font-size:12px;font-weight:700}
+.ESSAI{background:var(--warn)}.ACTIVE{background:var(--ok)}.EXPIREE{background:#6b7280}.REVOQUEE{background:var(--ko)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:#6b7280}.dot.on{background:#3ddc84}
+.wrap{overflow-x:auto}.empty{padding:24px;color:var(--mut)}
+</style></head><body>
+<header><h1>DIRECTEUR — Suivi des licences</h1>
+<input id="q" placeholder="Rechercher (machine, poste, n° licence)…" size="34"><button id="rf">Actualiser</button><label style="color:var(--mut)">Direct : <select id="rate" style="font:inherit;padding:6px;border-radius:6px;border:1px solid #2c4a78;background:#0e2444;color:var(--txt)"><option value="5">5 s</option><option value="10" selected>10 s</option><option value="30">30 s</option><option value="60">60 s</option></select></label><span id="live" class="dot"></span><span id="msg" style="color:var(--mut)"></span></header>
+<main><div class="stats" id="stats"></div><div class="wrap"><table><thead><tr>
+<th>En ligne</th><th>Machine</th><th>Poste</th><th>Statut</th><th>Temps restant</th><th>Expire le</th><th>Licence</th><th>Version</th><th>Rapports</th><th>Dernière vue</th><th>Première vue</th><th>Action</th>
+</tr></thead><tbody id="rows"></tbody></table><div id="empty" class="empty" hidden>Aucune machine pour le moment : elles apparaissent dès que DIRECTEUR envoie son premier rapport.</div></div></main>
+<script>
+let KEY=sessionStorage.getItem('gmi_admin')||prompt('Clé administrateur :')||'';sessionStorage.setItem('gmi_admin',KEY);
+let DATA=[];const $=id=>document.getElementById(id);
+const URL_API='/.netlify/functions/licence';
+const fmtReste=r=>{if(r.statut==='ESSAI'){const s=r.reste|0;return Math.floor(s/3600)+' h '+String(Math.floor(s%3600/60)).padStart(2,'0')+' min'}return '—'};
+const jours=r=>{if(!r.expire)return null;return Math.ceil((new Date(r.expire)-Date.now())/864e5)};
+const ago=s=>{if(!s)return '—';const d=Math.max(0,(Date.now()-new Date(s))/1000|0);if(d<60)return 'il y a '+d+' s';if(d<3600)return 'il y a '+(d/60|0)+' min';if(d<86400)return 'il y a '+(d/3600|0)+' h';return 'il y a '+(d/86400|0)+' j'};
+const ONLINE_MS=5*60e3;
+const dt=s=>s?new Date(s).toLocaleString('fr-FR'):'—';
+function td(tr,txt){const c=document.createElement('td');c.textContent=txt;tr.appendChild(c);return c}
+function btn(label,cls,fn){const b=document.createElement('button');b.textContent=label;if(cls)b.className=cls;b.onclick=fn;return b}
+function render(){
+ const q=$('q').value.toLowerCase();const body=$('rows');body.textContent='';
+ const cnt={ESSAI:0,ACTIVE:0,EXPIREE:0,REVOQUEE:0};let on=0,shown=0;
+ [...DATA].sort((a,b)=>(b.derniere_vue||'').localeCompare(a.derniere_vue||'')).forEach(r=>{
+  const st=r.revoque?'REVOQUEE':r.statut;cnt[st]=(cnt[st]||0)+1;
+  const online=Date.now()-new Date(r.derniere_vue)<ONLINE_MS;if(online)on++;
+  if(q&&![r.machine,r.poste,r.licence].join(' ').toLowerCase().includes(q))return;
+  shown++;const tr=document.createElement('tr');
+  const c0=td(tr,'');const d=document.createElement('span');d.className='dot'+(online?' on':'');c0.appendChild(d);c0.appendChild(document.createTextNode(online?'oui':'non'));
+  td(tr,r.machine);td(tr,r.poste||'—');
+  const cs=td(tr,'');const b=document.createElement('span');b.className='badge '+st;b.textContent=st;cs.appendChild(b);
+  const j=jours(r);
+  td(tr,st==='ACTIVE'?(j===null?'—':(j+' jour(s)')):st==='REVOQUEE'?'—':fmtReste(r));
+  td(tr,r.expire||'—');td(tr,r.licence||'—');td(tr,r.version||'—');td(tr,r.nb_rapports||0);{const cv=td(tr,ago(r.derniere_vue));cv.title=dt(r.derniere_vue)}td(tr,dt(r.premiere_vue));
+  const ca=td(tr,'');
+  ca.appendChild(btn(r.revoque?'Rétablir':'Suspendre','',()=>act(r.machine,r.revoque?'retablir':'revoquer')));
+  ca.appendChild(document.createTextNode(' '));
+  ca.appendChild(btn('Supprimer','del',()=>act(r.machine,'supprimer')));
+  body.appendChild(tr);
+ });
+ $('empty').hidden=shown>0;
+ $('stats').textContent='';
+ [['Machines',DATA.length],['En ligne (5 min)',on],['Essai',cnt.ESSAI],['Actives',cnt.ACTIVE],['Expirées',cnt.EXPIREE],['Suspendues',cnt.REVOQUEE]].forEach(([k,v])=>{
+  const s=document.createElement('div');s.className='stat';const n=document.createElement('b');n.textContent=v;s.appendChild(n);s.appendChild(document.createTextNode(k));$('stats').appendChild(s)});
+}
+async function load(){$('msg').textContent='Chargement…';
+ try{
+  const r=await fetch(URL_API,{headers:{'x-admin-key':KEY}});
+  if(r.status===401){$('msg').textContent='Clé administrateur incorrecte (rechargez la page)';sessionStorage.removeItem('gmi_admin');return}
+  if(!r.ok){$('msg').textContent='Erreur serveur ('+r.status+') : voir Netlify > Functions > licence > logs';return}
+  DATA=await r.json();$('msg').textContent='Mis à jour '+new Date().toLocaleTimeString('fr-FR');$('live').className='dot on';render();
+ }catch(e){$('live').className='dot';$('msg').textContent='Connexion impossible'}}
+async function act(machine,action){
+ const t={revoquer:'Suspendre',retablir:'Rétablir',supprimer:'SUPPRIMER définitivement'}[action];
+ if(!confirm(t+' la licence de '+machine+' ?'))return;
+ const r=await fetch(URL_API,{method:'POST',headers:{'x-admin-key':KEY,'content-type':'application/json'},body:JSON.stringify({action,machine})});
+ if(!r.ok)$('msg').textContent='Action refusée ('+r.status+')';load()}
+let T;function timer(){clearInterval(T);T=setInterval(()=>{if(!document.hidden)load()},$('rate').value*1000)}
+$('rate').onchange=timer;$('rf').onclick=load;$('q').oninput=render;setInterval(render,1000*5);load();timer();
+</script></body></html>
