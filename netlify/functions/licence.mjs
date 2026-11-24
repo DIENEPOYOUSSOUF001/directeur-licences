@@ -16,11 +16,8 @@ const ACTIONS = ["revoquer", "retablir", "supprimer"];
 const MACHINE = /^[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$/;
 const sha = (s) => createHash("sha256").update(String(s)).digest();
 
-const isAdmin = (req) => {
-  const k = Netlify.env.get("ADMIN_KEY");
-  if (!k || k.length < 8) return false;
-  return timingSafeEqual(sha(k), sha(req.headers.get("x-admin-key") || ""));
-};
+// MODE SANS CLE : aucune authentification (a la demande du proprietaire)
+const isAdmin = () => true;
 const refuse = async () => {
   await new Promise((r) => setTimeout(r, 700)); // freine les essais repetes
   return json({ error: "auth" }, 401);
